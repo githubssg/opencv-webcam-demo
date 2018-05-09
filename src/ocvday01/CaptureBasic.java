@@ -5,9 +5,12 @@ package ocvday01;
 
 
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileOutputStream;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -25,6 +28,10 @@ import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.objdetect.HOGDescriptor;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
+
+import util.ImageUtils;
+import util.callback.CallBackBody;
+import util.callback.CallBackTask;
   
 public class CaptureBasic extends JPanel {  
       
@@ -33,8 +40,9 @@ public class CaptureBasic extends JPanel {
 	 */
 	private static final long serialVersionUID = 1L;
 	private BufferedImage mImg;  
+	public static int i=1;
       
-    private BufferedImage mat2BI(Mat mat){  
+    private static BufferedImage mat2BI(Mat mat){  
         int dataSize =mat.cols()*mat.rows()*(int)mat.elemSize();  
         byte[] data=new byte[dataSize];  
         mat.get(0, 0,data);  
@@ -63,11 +71,13 @@ public class CaptureBasic extends JPanel {
     public static void main(String[] args) {  
         try{  
             //System.loadLibrary(Core.NATIVE_LIBRARY_NAME);  
+        	//load opencv
             String opencvpath = System.getProperty("user.dir") + "\\opencv\\";  
             String opencvDllName = opencvpath + Core.NATIVE_LIBRARY_NAME + ".dll";  
             System.load(opencvDllName);  
-            
+            //opencv 图片格式是 mat
             Mat capImg=new Mat();  
+            //获取摄像头 0 可以说是默认的,最好下拉列表判断下
             VideoCapture capture=new VideoCapture(0);  
             int height = (int)capture.get(Videoio.CAP_PROP_FRAME_HEIGHT);  
             int width = (int)capture.get(Videoio.CAP_PROP_FRAME_WIDTH);  
@@ -114,14 +124,11 @@ public class CaptureBasic extends JPanel {
             int n=0;
             Mat temp=new Mat();
             while(frame.isShowing()&& n<500){
-                //System.out.println("第"+n+"张");
                 capture.read(capImg);
                 Imgproc.cvtColor(capImg, temp, Imgproc.COLOR_RGB2GRAY);
-                //Imgcodecs.imwrite("G:/opencv/lw/neg/back"+n+".png", temp);
+                
                 panel.mImg=panel.mat2BI(detectFace(capImg));
                 panel.repaint();
-                //n++;
-                //break;
             }  
             capture.release();  
             frame.dispose();  
@@ -150,13 +157,43 @@ public class CaptureBasic extends JPanel {
 
         faceDetector.detectMultiScale(img, faceDetections);
 
-        //System.out.println(String.format("Detected %s faces", faceDetections.toArray().length));
+        System.out.println(String.format("Detected %s faces", faceDetections.toArray().length));
 
         Rect[] rects = faceDetections.toArray();
+        
         if(rects != null && rects.length >= 1){          
             for (Rect rect : rects) {  
                 Imgproc.rectangle(img, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),  
                         new Scalar(0, 0, 255), 2);  
+                
+                
+                final Object context = "上下文信息";
+           	 
+    	        new CallBackTask(new CallBackBody() {
+    	            @Override
+    				public
+    	            void execute(Object context) throws Exception {
+    	                System.out.println("\n正在执行耗时操作...");
+    	                System.out.println(context);
+
+    	                Rectangle myrect = new Rectangle(rect.x, rect.y, rect.width, rect.height);
+    	                ImageUtils.cutImage(mat2BI(img), new FileOutputStream(new File("D://uploadpic/"+i+".png")), myrect, "png");
+    	                i++;
+    	                
+    	                System.out.println("\n执行完成！");
+    	            }
+    	 
+    	            public void onSuccess(Object context) {
+    	                System.out.println("\n成功后的回调函数...");
+    	                System.out.println(context);
+    	            }
+    	 
+    	            public void onFailure(Object context) {
+    	                System.out.println("\n失败后的回调函数...");
+    	                System.out.println(context);
+    	            }
+    	        }).start(context);
+    	        
             } 
         }
         return img;

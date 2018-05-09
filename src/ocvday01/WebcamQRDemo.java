@@ -139,15 +139,15 @@ public class WebcamQRDemo extends JFrame implements Runnable, ThreadFactory,Webc
 	public BufferedImage transform(BufferedImage image){
 		// TODO Auto-generated method stub
 		//bufferimage --> mat
-		/*Mat mat = Mat2BufImg.BufImg2Mat(image, BufferedImage.TYPE_INT_RGB, 16);
+		Mat mat = Mat2BufImg.BufImg2Mat(image, BufferedImage.TYPE_3BYTE_BGR,  CvType.CV_8UC3);
 		//人脸识别
 		try {
 			//mat --> bufferimage
-			return Mat2BufImg.mat2BI(detectFace(mat));
+			return Mat2BufImg.Mat2BufImg(detectFace(mat),".png");
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}*/
+		}
 		
 		return image;
 	}
